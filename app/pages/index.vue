@@ -116,54 +116,45 @@
         </form>
 
         <!-- DNS Instructions -->
-        <div v-if="dnsInfo" class="dns-box">
-          <h3>✅ Domain added! Now configure your DNS:</h3>
-          <p class="dns-step">Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) → DNS Settings, and add
-            these records:</p>
+        <div v-if="addedDomain" class="dns-box">
+          <h3>✅ Domain <code>{{ addedDomain }}</code> added!</h3>
+          <p class="dns-step">Go to your domain registrar's DNS settings and add this record:</p>
 
           <div class="dns-table">
-            <h4>For root domain (e.g. <code>example.com</code>):</h4>
             <table class="dns-config-table">
               <thead>
                 <tr>
                   <th>Type</th>
                   <th>Name</th>
                   <th>Value</th>
+                  <th>TTL</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <!-- Root domain: use A record -->
+                <tr v-if="isRootDomain">
                   <td><code>A</code></td>
-                  <td><code>@</code></td>
+                  <td class="copyable" @click="copyText('@')"><code>@</code> <span class="copy-icon">📋</span></td>
                   <td class="copyable" @click="copyText('76.76.21.21')"><code>76.76.21.21</code> <span
                       class="copy-icon">📋</span></td>
+                  <td><code>Auto</code></td>
                 </tr>
-              </tbody>
-            </table>
-
-            <h4 style="margin-top: 16px;">For subdomain (e.g. <code>www.example.com</code>):</h4>
-            <table class="dns-config-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Name</th>
-                  <th>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
+                <!-- Subdomain: use CNAME record -->
+                <tr v-else>
                   <td><code>CNAME</code></td>
-                  <td><code>www</code></td>
+                  <td class="copyable" @click="copyText(subdomainName)"><code>{{ subdomainName }}</code> <span
+                      class="copy-icon">📋</span></td>
                   <td class="copyable" @click="copyText('cname.vercel-dns.com')"><code>cname.vercel-dns.com</code> <span
                       class="copy-icon">📋</span></td>
+                  <td><code>Auto</code></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div class="dns-notes">
-            <p>⏳ DNS changes can take up to 48 hours to propagate (usually 5-15 min).</p>
-            <p>🔒 SSL certificate is auto-provisioned by Vercel after DNS is verified.</p>
+            <p>⏳ DNS propagation takes 5-15 min (up to 48h in rare cases).</p>
+            <p>🔒 SSL is auto-provisioned by Vercel once DNS is verified.</p>
             <p>💡 Click any value to copy it to clipboard.</p>
           </div>
         </div>
@@ -234,7 +225,18 @@ const newPage = ref({ title: '', slug: '', bodyHtml: '' });
 const newDomain = ref({ domain: '', pageId: '' });
 const creatingPage = ref(false);
 const addingDomain = ref(false);
-const dnsInfo = ref(false);
+const addedDomain = ref('');
+
+// Parse the added domain to determine record type
+const isRootDomain = computed(() => {
+  const parts = addedDomain.value.split('.');
+  return parts.length <= 2; // e.g. "example.com" = root, "blog.example.com" = subdomain
+});
+
+const subdomainName = computed(() => {
+  const parts = addedDomain.value.split('.');
+  return parts.slice(0, parts.length - 2).join('.'); // e.g. "blog.example.com" → "blog"
+});
 const statusModal = ref<any>(null);
 
 const { data: pagesList, refresh: refreshPages } = await useFetch<any[]>('/api/pages');
@@ -258,16 +260,17 @@ async function createPage() {
 
 async function addDomain() {
   addingDomain.value = true;
-  dnsInfo.value = false;
+  addedDomain.value = '';
+  const domainToAdd = newDomain.value.domain.trim();
   try {
     await $fetch('/api/domains', {
       method: 'POST',
       body: {
-        domain: newDomain.value.domain,
+        domain: domainToAdd,
         pageId: Number(newDomain.value.pageId),
       },
     });
-    dnsInfo.value = true;
+    addedDomain.value = domainToAdd;
     newDomain.value = { domain: '', pageId: '' };
     await refreshDomains();
   } catch (e: any) {
