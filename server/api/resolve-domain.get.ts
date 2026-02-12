@@ -9,8 +9,11 @@ export default defineEventHandler(async (event) => {
   const hostname = host?.split(':')[0] ?? '';
 
   // Known app hostnames — not custom domains
-  const appHosts = ['localhost', '127.0.0.1'];
-  if (appHosts.includes(hostname)) return null;
+  if (
+    hostname.includes('localhost') ||
+    hostname.includes('127.0.0.1') ||
+    hostname.includes('vercel.app')
+  ) return null;
 
   // Look up domain in DB
   const [domainRecord] = await db
