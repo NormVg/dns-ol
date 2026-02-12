@@ -41,4 +41,5 @@ export default defineEventHandler(async (event) => {
   // Internally rewrite the URL to the page route
   const newPath = `/p/${domainRecord.pageId}`;
   event.node.req.url = newPath;
+  (event as any)._path = newPath;
 });
