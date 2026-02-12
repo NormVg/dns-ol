@@ -1,5 +1,11 @@
 <template>
-  <div class="app">
+  <!-- Custom domain: render the linked page -->
+  <div v-if="customPage" class="public-page">
+    <div class="page-content" v-html="customPage.bodyHtml"></div>
+  </div>
+
+  <!-- Main app: admin dashboard -->
+  <div v-else class="app">
     <header class="header">
       <div class="logo">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -183,6 +189,8 @@
 </template>
 
 <script setup lang="ts">
+// SSR: check if this request is from a custom domain
+const { data: customPage } = await useFetch('/api/resolve-domain');
 
 // Admin dashboard state (only used when NOT on a custom domain)
 const newPage = ref({ title: '', slug: '', bodyHtml: '' });
