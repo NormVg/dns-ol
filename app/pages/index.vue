@@ -116,11 +116,13 @@
         </form>
 
         <!-- DNS Instructions -->
-        <div v-if="addedDomain" class="dns-box">
-          <h3>✅ Domain <code>{{ addedDomain }}</code> added!</h3>
-          <p class="dns-step">Go to your domain registrar's DNS settings and add this record:</p>
+        <div v-if="domainStatus" class="dns-box">
+          <h3>✅ Domain <code>{{ domainStatus.domain }}</code> added!</h3>
+          <p class="dns-step">Go to your domain registrar's DNS settings and add these records:</p>
 
-          <div class="dns-table">
+          <!-- TXT Verification Record (if required by Vercel) -->
+          <div v-if="domainStatus.verification?.verification?.length" class="dns-table">
+            <h4 class="dns-section-title">🔐 Step 1 — Verification Record</h4>
             <table class="dns-config-table">
               <thead>
                 <tr>
@@ -131,21 +133,51 @@
                 </tr>
               </thead>
               <tbody>
-                <!-- Root domain: use A record -->
-                <tr v-if="isRootDomain">
-                  <td><code>A</code></td>
-                  <td class="copyable" @click="copyText('@')"><code>@</code> <span class="copy-icon">📋</span></td>
-                  <td class="copyable" @click="copyText('76.76.21.21')"><code>76.76.21.21</code> <span
+                <tr v-for="rec in domainStatus.verification.verification" :key="rec.domain">
+                  <td><code>{{ rec.type }}</code></td>
+                  <td class="copyable" @click="copyText(rec.domain)"><code>{{ rec.domain }}</code> <span
+                      class="copy-icon">📋</span></td>
+                  <td class="copyable" @click="copyText(rec.value)"><code class="wrap">{{ rec.value }}</code> <span
                       class="copy-icon">📋</span></td>
                   <td><code>Auto</code></td>
                 </tr>
-                <!-- Subdomain: use CNAME record -->
-                <tr v-else>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- DNS Routing Record -->
+          <div class="dns-table" style="margin-top: 16px;">
+            <h4 class="dns-section-title">🌐 {{ domainStatus.verification?.verification?.length ? 'Step 2 — ' : ''
+            }}Routing Record</h4>
+            <table class="dns-config-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Value</th>
+                  <th>TTL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Subdomain: use CNAME -->
+                <tr v-if="domainStatus.recommendedCNAME">
                   <td><code>CNAME</code></td>
-                  <td class="copyable" @click="copyText(subdomainName)"><code>{{ subdomainName }}</code> <span
-                      class="copy-icon">📋</span></td>
-                  <td class="copyable" @click="copyText('cname.vercel-dns.com')"><code>cname.vercel-dns.com</code> <span
-                      class="copy-icon">📋</span></td>
+                  <td class="copyable" @click="copyText(domainStatus.subdomainPart || domainStatus.domain)">
+                    <code>{{ domainStatus.subdomainPart || domainStatus.domain }}</code> <span
+                      class="copy-icon">📋</span>
+                  </td>
+                  <td class="copyable" @click="copyText(domainStatus.recommendedCNAME)">
+                    <code>{{ domainStatus.recommendedCNAME }}</code> <span class="copy-icon">📋</span>
+                  </td>
+                  <td><code>Auto</code></td>
+                </tr>
+                <!-- Root domain: use A record -->
+                <tr v-else>
+                  <td><code>A</code></td>
+                  <td class="copyable" @click="copyText('@')"><code>@</code> <span class="copy-icon">📋</span></td>
+                  <td class="copyable" @click="copyText(domainStatus.recommendedIP || '76.76.21.21')">
+                    <code>{{ domainStatus.recommendedIP || '76.76.21.21' }}</code> <span class="copy-icon">📋</span>
+                  </td>
                   <td><code>Auto</code></td>
                 </tr>
               </tbody>
@@ -225,18 +257,8 @@ const newPage = ref({ title: '', slug: '', bodyHtml: '' });
 const newDomain = ref({ domain: '', pageId: '' });
 const creatingPage = ref(false);
 const addingDomain = ref(false);
-const addedDomain = ref('');
+const domainStatus = ref<any>(null);
 
-// Parse the added domain to determine record type
-const isRootDomain = computed(() => {
-  const parts = addedDomain.value.split('.');
-  return parts.length <= 2; // e.g. "example.com" = root, "blog.example.com" = subdomain
-});
-
-const subdomainName = computed(() => {
-  const parts = addedDomain.value.split('.');
-  return parts.slice(0, parts.length - 2).join('.'); // e.g. "blog.example.com" → "blog"
-});
 const statusModal = ref<any>(null);
 
 const { data: pagesList, refresh: refreshPages } = await useFetch<any[]>('/api/pages');
@@ -260,17 +282,44 @@ async function createPage() {
 
 async function addDomain() {
   addingDomain.value = true;
-  addedDomain.value = '';
+  domainStatus.value = null;
   const domainToAdd = newDomain.value.domain.trim();
   try {
-    await $fetch('/api/domains', {
+    const result = await $fetch<any>('/api/domains', {
       method: 'POST',
       body: {
         domain: domainToAdd,
         pageId: Number(newDomain.value.pageId),
       },
     });
-    addedDomain.value = domainToAdd;
+
+    // Fetch the Vercel status to get exact DNS records
+    const domainId = result.id || result[0]?.id;
+    let status: any = { domain: domainToAdd };
+    if (domainId) {
+      try {
+        status = await $fetch(`/api/domains/${domainId}/status`);
+      } catch {
+        // Status fetch failed, use basic info
+      }
+    }
+
+    // Parse recommended records from Vercel response
+    const parts = domainToAdd.split('.');
+    const isSubdomain = parts.length > 2;
+    const subPart = isSubdomain ? parts.slice(0, parts.length - 2).join('.') : null;
+    const recCNAME = status.config?.recommendedCNAME?.[0]?.value?.replace(/\.$/, '');
+    const recIP = status.config?.recommendedIPv4?.[0]?.value?.[0];
+
+    domainStatus.value = {
+      domain: domainToAdd,
+      subdomainPart: subPart,
+      recommendedCNAME: isSubdomain ? (recCNAME || 'cname.vercel-dns.com') : null,
+      recommendedIP: !isSubdomain ? (recIP || '76.76.21.21') : null,
+      verification: status.verification || null,
+      config: status.config || null,
+    };
+
     newDomain.value = { domain: '', pageId: '' };
     await refreshDomains();
   } catch (e: any) {
@@ -586,6 +635,27 @@ td {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 14px;
+}
+
+.dns-box h3 code {
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.dns-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+code.wrap {
+  word-break: break-all;
+  white-space: normal;
+  display: inline;
 }
 
 .dns-records {
