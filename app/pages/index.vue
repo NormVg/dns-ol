@@ -117,18 +117,55 @@
 
         <!-- DNS Instructions -->
         <div v-if="dnsInfo" class="dns-box">
-          <h3>✅ Domain added! Configure your DNS:</h3>
-          <div class="dns-records">
-            <div class="dns-record">
-              <span class="dns-label">A Record</span>
-              <code>76.76.21.21</code>
-            </div>
-            <div class="dns-record">
-              <span class="dns-label">CNAME (subdomains)</span>
-              <code>cname.vercel-dns.com</code>
-            </div>
+          <h3>✅ Domain added! Now configure your DNS:</h3>
+          <p class="dns-step">Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) → DNS Settings, and add
+            these records:</p>
+
+          <div class="dns-table">
+            <h4>For root domain (e.g. <code>example.com</code>):</h4>
+            <table class="dns-config-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>A</code></td>
+                  <td><code>@</code></td>
+                  <td class="copyable" @click="copyText('76.76.21.21')"><code>76.76.21.21</code> <span
+                      class="copy-icon">📋</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h4 style="margin-top: 16px;">For subdomain (e.g. <code>www.example.com</code>):</h4>
+            <table class="dns-config-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>CNAME</code></td>
+                  <td><code>www</code></td>
+                  <td class="copyable" @click="copyText('cname.vercel-dns.com')"><code>cname.vercel-dns.com</code> <span
+                      class="copy-icon">📋</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <p class="dns-note">Point your domain's DNS records to the values above. SSL is auto-provisioned.</p>
+
+          <div class="dns-notes">
+            <p>⏳ DNS changes can take up to 48 hours to propagate (usually 5-15 min).</p>
+            <p>🔒 SSL certificate is auto-provisioned by Vercel after DNS is verified.</p>
+            <p>💡 Click any value to copy it to clipboard.</p>
+          </div>
         </div>
       </section>
 
@@ -263,6 +300,15 @@ async function removeDomain(d: any) {
     alert(e.data?.message || 'Failed to remove domain');
   } finally {
     d.deleting = false;
+  }
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(`Copied: ${text}`);
+  } catch {
+    prompt('Copy this value:', text);
   }
 }
 </script>
@@ -571,6 +617,93 @@ td {
   margin-top: 12px;
   font-size: 12px;
   color: var(--text-dim);
+}
+
+.dns-step {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.dns-table h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.dns-table h4 code {
+  background: var(--surface-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.dns-config-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4px;
+}
+
+.dns-config-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dns-config-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(42, 42, 58, 0.3);
+}
+
+.dns-config-table code {
+  background: var(--surface-2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.copyable {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.copyable:hover {
+  opacity: 0.8;
+}
+
+.copy-icon {
+  font-size: 12px;
+  opacity: 0.5;
+  margin-left: 4px;
+}
+
+.copyable:hover .copy-icon {
+  opacity: 1;
+}
+
+.dns-notes {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(108, 99, 255, 0.2);
+}
+
+.dns-notes p {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  line-height: 1.6;
 }
 
 .modal-overlay {
