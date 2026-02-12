@@ -1,5 +1,11 @@
 <template>
-  <div class="app">
+  <!-- Custom domain view: show the linked page -->
+  <div v-if="customPage" class="public-page">
+    <div class="page-content" v-html="customPage.bodyHtml"></div>
+  </div>
+
+  <!-- Main app view: admin dashboard -->
+  <div v-else class="app">
     <header class="header">
       <div class="logo">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -45,7 +51,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Pages
         </h2>
-        <div v-if="pagesList.length === 0" class="empty">No pages yet. Create one above.</div>
+        <div v-if="!pagesList?.length" class="empty">No pages yet. Create one above.</div>
         <div v-else class="table-wrap">
           <table>
             <thead>
@@ -118,7 +124,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           Domains
         </h2>
-        <div v-if="domainsList.length === 0" class="empty">No domains yet. Add one above.</div>
+        <div v-if="!domainsList?.length" class="empty">No domains yet. Add one above.</div>
         <div v-else class="table-wrap">
           <table>
             <thead>
@@ -165,6 +171,10 @@
 </template>
 
 <script setup lang="ts">
+// Check if we're on a custom domain — if so, render that page
+const { data: customPage } = await useFetch('/api/resolve-domain');
+
+// Admin dashboard state (only used when NOT on a custom domain)
 const newPage = ref({ title: '', slug: '', bodyHtml: '' });
 const newDomain = ref({ domain: '', pageId: '' });
 const creatingPage = ref(false);
@@ -267,6 +277,35 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Public page styles */
+.public-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 60px 24px;
+}
+
+.page-content h1 {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+}
+
+.page-content p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #a0a0b8;
+  margin-bottom: 16px;
+}
+
+/* Admin styles */
 .app {
   max-width: 860px;
   margin: 0 auto;
