@@ -1,16 +1,11 @@
 <template>
-  <!-- Custom domain view: show the linked page -->
-  <div v-if="customPage" class="public-page">
-    <div class="page-content" v-html="customPage.bodyHtml"></div>
-  </div>
-
-  <!-- Main app view: admin dashboard -->
-  <div v-else class="app">
+  <div class="app">
     <header class="header">
       <div class="logo">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          <path
+            d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
         </svg>
         <span>DNS-OL</span>
       </div>
@@ -21,7 +16,12 @@
       <!-- Create Page Section -->
       <section class="card">
         <h2 class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+          </svg>
           Create Page
         </h2>
         <form @submit.prevent="createPage" class="form">
@@ -37,7 +37,8 @@
           </div>
           <div class="field">
             <label>Body HTML</label>
-            <textarea v-model="newPage.bodyHtml" rows="4" placeholder="<h1>Welcome!</h1><p>This is my page.</p>"></textarea>
+            <textarea v-model="newPage.bodyHtml" rows="4"
+              placeholder="<h1>Welcome!</h1><p>This is my page.</p>"></textarea>
           </div>
           <button type="submit" class="btn btn-primary" :disabled="creatingPage">
             {{ creatingPage ? 'Creating...' : 'Create Page' }}
@@ -48,7 +49,10 @@
       <!-- Pages List -->
       <section class="card">
         <h2 class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
           Pages
         </h2>
         <div v-if="!pagesList?.length" class="empty">No pages yet. Create one above.</div>
@@ -77,7 +81,11 @@
       <!-- Add Domain Section -->
       <section class="card">
         <h2 class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
           Add Custom Domain
         </h2>
         <form @submit.prevent="addDomain" class="form">
@@ -121,7 +129,11 @@
       <!-- Domains List -->
       <section class="card">
         <h2 class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path
+              d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
           Domains
         </h2>
         <div v-if="!domainsList?.length" class="empty">No domains yet. Add one above.</div>
@@ -171,8 +183,6 @@
 </template>
 
 <script setup lang="ts">
-// Check if we're on a custom domain — if so, render that page
-const { data: customPage } = await useFetch('/api/resolve-domain');
 
 // Admin dashboard state (only used when NOT on a custom domain)
 const newPage = ref({ title: '', slug: '', bodyHtml: '' });
@@ -252,7 +262,11 @@ async function removeDomain(d: any) {
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 :root {
   --bg: #0a0a0f;
@@ -275,34 +289,6 @@ body {
   font-family: 'Inter', -apple-system, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Public page styles */
-.public-page {
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.page-content {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 60px 24px;
-}
-
-.page-content h1 {
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 24px;
-  letter-spacing: -1px;
-}
-
-.page-content p {
-  font-size: 17px;
-  line-height: 1.7;
-  color: #a0a0b8;
-  margin-bottom: 16px;
 }
 
 /* Admin styles */
@@ -351,7 +337,11 @@ body {
   color: var(--text);
 }
 
-.form { display: flex; flex-direction: column; gap: 16px; }
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .form-row {
   display: grid;
@@ -359,7 +349,11 @@ body {
   gap: 16px;
 }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .field label {
   font-size: 12px;
@@ -390,8 +384,13 @@ body {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.field textarea { resize: vertical; }
-.field select { cursor: pointer; }
+.field textarea {
+  resize: vertical;
+}
+
+.field select {
+  cursor: pointer;
+}
 
 .btn {
   display: inline-flex;
@@ -410,8 +409,14 @@ body {
   transition: all 0.15s;
 }
 
-.btn:hover { background: var(--border); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:hover {
+  background: var(--border);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .btn-primary {
   background: var(--accent);
@@ -420,14 +425,28 @@ body {
   align-self: flex-start;
 }
 
-.btn-primary:hover { background: #5a52e0; }
+.btn-primary:hover {
+  background: #5a52e0;
+}
 
-.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
 
-.btn-danger { color: var(--danger); border-color: var(--danger); background: transparent; }
-.btn-danger:hover { background: rgba(255, 77, 106, 0.1); }
+.btn-danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
 
-.table-wrap { overflow-x: auto; }
+.btn-danger:hover {
+  background: rgba(255, 77, 106, 0.1);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
 
 table {
   width: 100%;
@@ -451,14 +470,20 @@ td {
   border-bottom: 1px solid rgba(42, 42, 58, 0.5);
 }
 
-.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
 
 .link {
   color: var(--accent);
   text-decoration: none;
   font-size: 13px;
 }
-.link:hover { text-decoration: underline; }
+
+.link:hover {
+  text-decoration: underline;
+}
 
 .badge {
   display: inline-block;
@@ -470,10 +495,20 @@ td {
   letter-spacing: 0.3px;
 }
 
-.badge-ok { background: rgba(52, 211, 153, 0.15); color: var(--success); }
-.badge-pending { background: rgba(251, 191, 36, 0.15); color: var(--warning); }
+.badge-ok {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--success);
+}
 
-.actions { display: flex; gap: 8px; }
+.badge-pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--warning);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
 
 .empty {
   color: var(--text-dim);
@@ -496,7 +531,11 @@ td {
   margin-bottom: 14px;
 }
 
-.dns-records { display: flex; flex-direction: column; gap: 10px; }
+.dns-records {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .dns-record {
   display: flex;
@@ -568,7 +607,12 @@ td {
 }
 
 @media (max-width: 640px) {
-  .form-row { grid-template-columns: 1fr; }
-  .app { padding: 24px 16px 60px; }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .app {
+    padding: 24px 16px 60px;
+  }
 }
 </style>
